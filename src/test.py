@@ -47,10 +47,15 @@ def main():
   bb_up, bb_middle, bb_down = talib.BBANDS(numpy.array(df['Close']),
     period, sigma, sigma, moving_average_type)
   df['bb_up']=bb_up
+  # print(df)
+  # mpf.plot(df, type="candle", mav=[20], hlines={'hlines':[136.28,136.32],'colors':['g','r']},
+  df['bb_middle']=bb_middle
+  df['bb_down']=bb_down
+  apd = mpf.make_addplot(df[['bb_up', 'bb_middle', 'bb_down']],linestyle='dashdot',alpha=0.5)
   print(df)
   # print(bb_up.__class__)
-
-  mpf.plot(df, type="candle", mav=[20], hlines={'hlines':[136.28,136.32],'colors':['g','r']},
+  # 移動平均線の場合は下記に引数`mav[20]`など
+  mpf.plot(df, type="candle", addplot=apd, hlines={'hlines':[136.28,136.32],'colors':['g','r']},
       fill_between=dict(y1=y1value, y2=y2value, where=where_values, alpha=0.2), style="yahoo")
       # vlines={'vlines':['2023-05-01 07:23','2023-05-01 07:43'],'colors':['g','r']},
       # fill_between=dict(
