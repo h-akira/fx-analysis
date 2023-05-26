@@ -9,6 +9,8 @@ import os
 import pandas as pd
 import mplfinance as mpf
 import datetime
+import talib
+import numpy
 # import matplotlib.pyplot as plt
 
 def parse_args():
@@ -37,9 +39,20 @@ def main():
   y2value = df['Low'].min()
   where_values = pd.notnull(dates_df[(dates_df>=buy_time)&(dates_df<=sell_time)])['date'].values
   print(where_values)
+  period = 20  # 任意の値を設定
+  sigma = 2  # 任意の値を設定
+  # 下記は移動平均の種類
+  # 0:単純移動平均
+  moving_average_type = 0
+  bb_up, bb_middle, bb_down = talib.BBANDS(numpy.array(df['Close']),
+    period, sigma, sigma, moving_average_type)
+  df['bb_up']=bb_up
+  print(df)
+  # print(bb_up.__class__)
+
   mpf.plot(df, type="candle", mav=[20], hlines={'hlines':[136.28,136.32],'colors':['g','r']},
-      vlines={'vlines':['2023-05-01 07:23','2023-05-01 07:43'],'colors':['g','r']},
-      fill_between=dict(y1=y1value, y2=y2value, where=where_values))
+      fill_between=dict(y1=y1value, y2=y2value, where=where_values, alpha=0.2), style="yahoo")
+      # vlines={'vlines':['2023-05-01 07:23','2023-05-01 07:43'],'colors':['g','r']},
       # fill_between=dict(
       # x1=pd.Timestamp('2023-05-01 07:23'),
       # x2=pd.Timestamp('2023-05-01 07:23')
