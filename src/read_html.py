@@ -20,15 +20,25 @@ def parse_args():
 
 """, formatter_class = argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("--version", action="version", version='%(prog)s 0.0.1')
-  parser.add_argument("-o", "--output", metavar="output-file", default="output", help="output file")
-  parser.add_argument("-l", "--little", action="store_true", help="little endian")
-  parser.add_argument("file", metavar="input-file", help="input file")
+  parser.add_argument("-c", "--csv", metavar="csv-file", default="data.csv", help="csv file to save DataFrame")
+  # parser.add_argument("-o", "--output", metavar="output-file", default="output.csv", help="output file")
+  # parser.add_argument("-l", "--little", action="store_true", help="little endian")
+  parser.add_argument("file", metavar="html-file", help="input file")
   options = parser.parse_args()
   return options
 
 def main():
   # ArgumentParser
   options = parse_args()
+  if os.path.isfile(options.csv):
+    main_df = pd.read_csv(options.csv, header=0, dtype="object", na_values="")
+    before_row = main_df.shape[0]
+    # print(main_df)
+  else:
+    main_df=pd.DataFrame()
+    before_row = 0
+  print(main_df.dtypes)
+  # print(main_df)
   # CHROMEDRIVER = "/usr/bin/chromedriver"
   # driver_options = Options()
   # options.add_argument('--headless')
@@ -44,7 +54,7 @@ def main():
   columns_jp = []
   for th in ths:
     columns_jp.append(th.text)
-  print(columns_jp)
+  # print(columns_jp)
   tbody = table.find('tbody')
   trs = tbody.find_all('tr')
   data = []
@@ -53,36 +63,6 @@ def main():
     for td in tr.find_all('td'):
       row.append(td.text)
     data.append(row)
-  # columns_jp = [
-  #     "通貨ペア",
-  #     "注文タイプ",
-  #     "取引種類  売買",
-  #     "取引数量",
-  #     "注文レート[執行条件]  現在値",
-  #     "状態  失効理由",
-  #     "約定レート",
-  #     "約定日時  受渡日",
-  #     "決済損益  取引手数料",
-  #     "累計スワップ",
-  #     "注文日時  有効期限",
-  #     "注文番号",
-  #     "変更  取消",
-  #     ]
-  # columns = [
-  #     "pair",
-  #     "type",
-  #     "kind buy_sell",
-  #     "quantity",
-  #     "order_rate now_rate",
-  #     "state revocation_reason",
-  #     "contract_rate",
-  #     "contract_datetime receipt_date",
-  #     "profit commission",
-  #     "swap",
-  #     "order_datetime ecpiration_date",
-  #     "number",
-  #     "change delete",
-  #     ]
   # print(data)
   df = pd.DataFrame(data=data,columns=columns_jp)
   df["pair"] = df["通貨ペア"]
@@ -95,18 +75,29 @@ def main():
   df["execution rate"] = df["約定レート "]
   df["execution date and time"] = df["約定日時受渡日"].str[:17]
   df["receipt date"] = df["約定日時受渡日"].str[17:].str.strip()
-  df["profit"] = df["決済損益取引手数料"]
+  df["profit"] = df["決済損益取引手数料"].str.replace(",","")
   df["swap"] = df["累計スワップ"]
   df["order date and time"] = df["注文日時有効期限"].str[:17]
   df["expiration date"] = df["注文日時有効期限"].str[17:].str.strip()
   df["order number"] = df["注文番号"]
   df["change and cancel"] = df["変更取消"]
   df = df.drop(columns=columns_jp)
-  print(df)
-  print(df["execution date and time"])
-
-
-
+  
+  print("main_df")
+  print(main_df)
+  main_df = pd.concat([main_df, df])
+  print("連結")
+  print(main_df)
+  # main_df = main_df.drop_duplicates(subset=["order number"]).sort_values(by="order number", ascending=True)
+  main_df = main_df.drop_duplicates(subset=["order number"])
+  print("削除")
+  print(main_df)
+  main_df = main_df.sort_values(by="order number", ascending=True)
+  print("並べ替え")
+  print(main_df)
+  df.to_csv(options.csv, header=True, index=False)
+  # print(df.sort_values(by="order number", ascending=True))
+  print(f"{df.shape[0]-before_row}行追加しました．")
 
 if __name__ == '__main__':
   main()
