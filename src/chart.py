@@ -8,8 +8,49 @@ import pandas as pd
 import mplfinance as mpf
 import talib
 import numpy
-  
-def GMO2DataFrame(file_name):
+import glob
+import os
+import re
+import datetime
+
+def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
+  # ディレクトリ構造は以下の通り:
+  # .
+  # |-USDJPY
+  # | |-202303
+  # | | |-USDJPY_20230301.csv
+  # | | |-USDJPY_20230302.csv
+  # | | |-USDJPY_20230303.csv
+  # | | |-...
+  # | |-202304
+  # | | |-...
+  # | |-202305
+  # |   |-...
+  # |-EURJPY
+  #    |-...
+  file_list = glob.glob(os.path.join(dir_name,pair)+f"/*/{pair}_*.csv")
+  df = pd.DataFrame()
+  for file in file_list:
+    if file[:len(pair)] != os.path.basename(pair) or file[-4:] != ".csv":
+      print(f"skip: {file}")
+      continue
+    m = re.search(r"\d{4}\d{2}\d{2}", file)
+    if m:
+      file_date = datetime.datetime.strptime(m.group(),"%Y%m%d").date()  # 日付文字列を取得
+    else:
+      print(f"skip: {file}")
+      continue
+    if date_range != None:
+      if date_range[0] <= file_date < date_range[1]:
+        pass
+      else:
+        continue
+    df = pd.concat([df,GMO_csv2DataFrame(file)])
+  df = df.sort_values(by="date", ascending=True)
+  print(df)
+
+
+def GMO_csv2DataFrame(file_name):
   # GMOクリック証券からダウンロードしたヒストリカルデータ（CSVファイル）を読み込み，
   # mplfinanceで扱えるデータフレームにして返す．
   df = pd.read_csv(file_name, encoding='shift_jis').rename(
@@ -33,11 +74,13 @@ def add_BBands(df,period=20,nbdev=2,matype=0):
   df['bb_down']=bb_down
   return df
 
-def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style="yahoo"):
+def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None,savefig=None,figsize=(2,1)):
   # hlinesとvlinseは辞書型
-  # 例: {'hlines':[136.28,136.32],'colors':['g','r']}
+  # 例: {'hlines':[136.28,136.32],'colors':['g','r'],'linewidths'=[1,1]}
+  # savefigも辞書型
+  # 例: {'fname':'test.png','dpi':100}
   plot_args = {
-    "type":"candle"
+    "type":"candle",
   }
   if buy_time != None and sell_time != None:
     if buy_time.__class__ == str:
@@ -50,10 +93,18 @@ def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style="yah
     where_values = pd.notnull(dates_df[(dates_df>=buy_time)&(dates_df<=sell_time)])['date'].values
     plot_args["fill_between"] = dict(y1=y1value, y2=y2value, where=where_values, alpha=0.2) 
   if "bb_up" in df.columns and "bb_middle" in df.columns and "bb_down" in df.columns:
-    plot_args["addplot"] = mpf.make_addplot(df[['bb_up', 'bb_middle', 'bb_down']],linestyle='dashdot',alpha=0.5)
+    plot_args["addplot"] = [
+      mpf.make_addplot(df[['bb_up', 'bb_down']],linestyle='dashdot', color='r', alpha=0.5),
+      mpf.make_addplot(df['bb_middle'], color='b', alpha=0.5)
+    ]
+  if style != None:
+    plot_args["style"] = style
   if hlines != None:
     plot_args["hlines"] = hlines
   if vlines != None:
     plot_args["vlines"] = vlines
+  if savefig != None:
+    plot_args["figsize"] = figsize
+    plot_args["savefig"] = savefig
   mpf.plot(df, **plot_args)
 
