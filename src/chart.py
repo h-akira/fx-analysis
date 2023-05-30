@@ -50,16 +50,16 @@ def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
   print(df)
 
 
-def GMO_csv2DataFrame(file_name):
+def GMO_csv2DataFrame(file_name,BID_ASK="BID"):
   # GMOクリック証券からダウンロードしたヒストリカルデータ（CSVファイル）を読み込み，
   # mplfinanceで扱えるデータフレームにして返す．
   df = pd.read_csv(file_name, encoding='shift_jis').rename(
     columns={
       '日時':'date', 
-      '始値(BID)':'Open', 
-      '高値(BID)':'High', 
-      '安値(BID)':'Low', 
-      '終値(BID)':'Close'
+      f'始値({BID_ASK})':'Open', 
+      f'高値({BID_ASK})':'High', 
+      f'安値({BID_ASK})':'Low', 
+      f'終値({BID_ASK})':'Close'
     }
   )
   df["date"] = pd.to_datetime(df["date"])
