@@ -31,7 +31,7 @@ def GMO_dir2DataFrame(dir_name,pair="USDJPY",date_range=None):
   file_list = glob.glob(os.path.join(dir_name,pair)+f"/*/{pair}_*.csv")
   df = pd.DataFrame()
   for file in file_list:
-    if file[:len(pair)] != os.path.basename(pair) or file[-4:] != ".csv":
+    if os.path.basename(file)[:len(pair)] != pair or file[-4:] != ".csv":
       print(f"skip: {file}")
       continue
     m = re.search(r"\d{4}\d{2}\d{2}", file)

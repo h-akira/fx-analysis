@@ -14,12 +14,30 @@ import pandas as pd
 # from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 
+
+
+
+
+
+class Trade:
+  def __init__(self, new=None, settlement=None):
+    self.new = new
+    self.settlement = settlement
+  def search_new(self, df, sell)
+    pass
+    
+
+
 def GMO_read_csv(file_name, exception=False):
   if os.path.isfile(file_name):
-    main_df = pd.read_csv(file_name, header=0, dtype="object", na_values="")
+    df = pd.read_csv(file_name, header=0, dtype="object", na_values="")
+    df["profit"] = df["profit"].str.replace(",","").astype(int)
+    df["swap"] = df["swap"].str.replace(",","").astype(int)
+
   else:
     if exception:
       raise Exception
+  return df
 
 def GMO_html2df(html):
   bs = BeautifulSoup(html, 'html.parser')
@@ -48,8 +66,8 @@ def GMO_html2df(html):
   df["execution rate"] = df["約定レート "]
   df["execution date and time"] = df["約定日時受渡日"].str[:17]
   df["receipt date"] = df["約定日時受渡日"].str[17:].str.strip()
-  df["profit"] = df["決済損益取引手数料"].str.replace(",","")
-  df["swap"] = df["累計スワップ"]
+  df["profit"] = df["決済損益取引手数料"].str.replace(",","").astype(int)
+  df["swap"] = df["累計スワップ"].str.replace(",","").astype(int)
   df["order date and time"] = df["注文日時有効期限"].str[:17]
   df["expiration date"] = df["注文日時有効期限"].str[17:].str.strip()
   df["order number"] = df["注文番号"]
@@ -77,7 +95,6 @@ def test():
   df = add_data(df, add_df)
   print(df)
   save_df(df,options.csv)
-  
 
 if __name__ == '__main__':
   test()
