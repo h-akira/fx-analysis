@@ -14,16 +14,11 @@ import pandas as pd
 # from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 
-
-
-
-
-
 class Trade:
   def __init__(self, new=None, settlement=None):
     self.new = new
     self.settlement = settlement
-  def search_new(self, df, sell)
+  def search_new(self, df, settlement):
     pass
     
 
@@ -31,9 +26,9 @@ class Trade:
 def GMO_read_csv(file_name, exception=False):
   if os.path.isfile(file_name):
     df = pd.read_csv(file_name, header=0, dtype="object", na_values="")
-    df["profit"] = df["profit"].str.replace(",","").astype(int)
-    df["swap"] = df["swap"].str.replace(",","").astype(int)
-
+    df["profit"] = df["profit"].str.replace(",","").astype(pd.Int64Dtype())
+    df["swap"] = df["swap"].str.replace(",","").astype(pd.Int64Dtype())
+    df["order date and time"] = pd.to_datetime(df["order date and time"])
   else:
     if exception:
       raise Exception
@@ -56,6 +51,7 @@ def GMO_html2df(html):
       row.append(td.text)
     data.append(row)
   df = pd.DataFrame(data=data,columns=columns_jp)
+  df.replace('', numpy.nan, inplace=True)
   df["pair"] = df["通貨ペア"]
   df["type"] = df["注文タイプ"]
   df["kind"] = df["\n取引種類\n\n売買\n"].str.split(expand=True)[0].str.strip()
@@ -66,9 +62,9 @@ def GMO_html2df(html):
   df["execution rate"] = df["約定レート "]
   df["execution date and time"] = df["約定日時受渡日"].str[:17]
   df["receipt date"] = df["約定日時受渡日"].str[17:].str.strip()
-  df["profit"] = df["決済損益取引手数料"].str.replace(",","").astype(int)
-  df["swap"] = df["累計スワップ"].str.replace(",","").astype(int)
-  df["order date and time"] = df["注文日時有効期限"].str[:17]
+  df["profit"] = df["決済損益取引手数料"].str.replace(",","").astype(pd.Int64Dtype())
+  df["swap"] = df["累計スワップ"].str.replace(",","").astype(pd.Int64Dtype())
+  df["order date and time"] = pd.to_datetime(df["注文日時有効期限"].str[:17], format="%y/%m/%d %H:%M:%S")
   df["expiration date"] = df["注文日時有効期限"].str[17:].str.strip()
   df["order number"] = df["注文番号"]
   df["change and cancel"] = df["変更取消"]
@@ -87,7 +83,7 @@ def save_df(df, file_name):
 def test():
   import argparse
   parser = argparse.ArgumentParser(description="test")
-  parser.add_argument("-c", "--csv", metavar="csv-file")
+  parser.add_argument("-c", "--csv", default="output.csv", metavar="csv-file")
   parser.add_argument("html", metavar="html-file")
   options = parser.parse_args()
   df = GMO_read_csv(options.csv)
