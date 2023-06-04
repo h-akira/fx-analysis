@@ -74,11 +74,17 @@ def add_BBands(df,period=20,nbdev=2,matype=0):
   df['bb_down']=bb_down
   return df
 
-def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None,savefig=None,figsize=(2,1)):
+def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None,rule=None, savefig=None,figsize=(2,1)):
   # hlinesとvlinseは辞書型
   # 例: {'hlines':[136.28,136.32],'colors':['g','r'],'linewidths'=[1,1]}
   # savefigも辞書型
   # 例: {'fname':'test.png','dpi':100}
+  # ruleは"5T"など
+  if rule != None:
+    df["Open"] = df["Open"].resample(rule).first()
+    df["High"] = df["High"].resample(rule).max()
+    df["Low"] = df["Low"].resample(rule).min()
+    df["Close"] = df["Close"].resample(rule).last()
   plot_args = {
     "type":"candle",
   }
@@ -108,3 +114,20 @@ def gen_chart(df,buy_time=None,sell_time=None,hlines=None,vlines=None,style=None
     plot_args["savefig"] = savefig
   mpf.plot(df, **plot_args)
 
+def test():
+  import argparse
+  parser = argparse.ArgumentParser(description="""\
+
+""", formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+  parser.add_argument("--version", action="version", version='%(prog)s 0.0.1')
+  # parser.add_argument("-o", "--output", metavar="output-file", default="output", help="output file")
+  # parser.add_argument("-l", "--little", action="store_true", help="little endian")
+  parser.add_argument("file", metavar="input-file", help="input file")
+  options = parser.parse_args()
+  df = GMO_csv2DataFrame(options.file)
+  df = add_BBands(df,20,2,0)
+  # chart.gen_chart(df.head(100),"2023-05-01 07:23","2023-05-01 07:33",dict(hlines=[136.28,136.32],colors=["g","r"]),figsize=(10,5),savefig=dict(fname="test.png",dpi=1000))
+  gen_chart(df.head(100),"2023-05-01 07:23","2023-05-01 07:33",dict(hlines=[136.28,136.32],colors=["g","g"],linewidths=[0.1,0.1]),rule="5T")
+
+if __name__ == '__main__':
+  test()
