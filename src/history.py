@@ -19,9 +19,13 @@ class Trade:
     self.new = new
     self.settlement = settlement
   def search_new(self, df, settlement):
-    pass
-    
-
+    if df.shape[0] != 0:
+      raise ValueError
+    st = df["order date and time"][0]
+    print("+=+="*20)
+    print(st)
+    print(st.__class__)
+    print("+=+="*20)
 
 def GMO_read_csv(file_name, exception=False):
   if os.path.isfile(file_name):
@@ -89,8 +93,20 @@ def test():
   df = GMO_read_csv(options.csv)
   add_df = GMO_html2df(open(options.html, mode="r").read())
   df = add_data(df, add_df)
-  print(df)
+  print(df["receipt date"][23])
+  print("--"*30)
   save_df(df,options.csv)
+  print(df.loc[23]) 
+  test_Trade = Trade().search_new(df, df.loc[23])
+  print("--"*30)
+  print(df.loc[23].__class__)
+  print(df.loc[23])
+  print(df.__class__)
+  for i,d in enumerate(df):
+    print(d)
+    if i == 5:
+      break
+
 
 if __name__ == '__main__':
   test()
